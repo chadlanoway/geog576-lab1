@@ -8,18 +8,94 @@
   <link rel="stylesheet" href="https://js.arcgis.com/4.25/esri/themes/light/main.css">
   <script src="https://js.arcgis.com/4.25/"></script>
   <script>  
-  require(["esri/config", "esri/Map", "esri/views/MapView"], function(esriConfig, Map, MapView) {  
+  require([
+      "esri/config",
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/widgets/BasemapGallery",
+      "esri/widgets/Expand",
+      "esri/widgets/Search",
+      "esri/widgets/Locate"
+    ], function (
+      esriConfig,
+      EsriMap,
+      MapView,
+      BasemapGallery,
+      Expand,
+      Search,
+      Locate
+    ) { 
     esriConfig.apiKey = "AAPTxy8BH1VEsoebNVZXo8HurI_RfmIe9k9xWA71ZLIIsczdLg11Hph-QWgzWd0_r5sb7ztb4uxrouLY_PEP3yDZIc6eitLvHv7O199kztREAdbXglF0zmfz_EAX-OgmUhBODvOpbwg-0rOK-v_mEMNVqGi3BwJm1JL6maf_hLSJw7OtlANrRRjhmhBO2BXjzgtfW6cPDZdOjnO2JQFsCDj5TnDoW0hHHL5KmKsTt6vPpq2DKvU8N2zN_yEY7YWDEP70AT1_YqnMWtvh"; 
-     const map = new Map({ 
-    basemap: "streets" // Basemap layer service 
-    });
+      
+   const map = new EsriMap({
+    basemap: "streets-navigation-vector"
+  });
+
 
     const view = new MapView({
-    map: map,
-    center: [-97.7431, 30.2672], // Longitude, latitude
-    zoom: 13, // Zoom level
-    container: "viewDiv" // Div element
-    });
+        container: "viewDiv", 
+        map: map,
+        center: [-97.7431, 30.2672],  
+        scale: 25000                  
+       
+      });
+      // make a basemap gallery
+      const basemapGallery = new BasemapGallery({
+        view: view,
+      });
+
+      //wrap the gallery
+      const bgExpand = new Expand({
+        view: view,
+        content: basemapGallery,
+        expandIconClass: "esri-icon-basemap", 
+        expanded: false,     
+        expandTooltip: "Choose a basemap",
+        group: "top-left",
+        container: document.createElement("div")
+      });
+
+      bgExpand.container.classList.add("basemap-gallery-panel");
+
+      view.ui.add(bgExpand, "top-left");
+
+      // listen for changes
+      basemapGallery.watch("activeBasemap", (newBasemap) => {
+        console.log("User selected basemap:", newBasemap.title);     
+      });
+      // search box
+      const searchWidget = new Search({
+        view: view,
+        allPlaceholder: "Find address or place"
+      });
+      view.ui.add(searchWidget, {
+        position: "top-right",
+        index: 0
+      });
+
+      // locate button
+      const locateWidget = new Locate({
+        view: view,
+        useHeadingEnabled: false,  
+        goToOverride: function (view, options) {
+          
+          return view.goTo({
+            target: options.target, 
+            scale: 5000            
+          });
+        }
+      });
+      
+      view.ui.add(locateWidget, {
+        position: "top-right",
+        index: 1 
+      });
+
+      // listen for coord returns
+      locateWidget.on("locate", function (event) {
+        console.log("Located user at:", event.position.coords);
+      });
+   
   });  
 
  
